@@ -24,6 +24,10 @@ jobs:
       - name: query
         run: make query
       - name: test
+        env: 
+          databricks_api_key: ${{ secrets.DATABRICKS_API_KEY }}
+          sql_server_host: ${{ secrets.SQL_SERVER_HOST }}
+          sql_http: ${{ secrets.SQL_HTTP }}
         run: make test
       - name: format
         run: make format
@@ -31,7 +35,3 @@ jobs:
         run: make generate_and_push
       - name: deploy
         run: make deploy
-        env: 
-          databricks_api_key: ${{ secrets.DATABRICKS_API_KEY }}
-          sql_server_host: ${{ secrets.SQL_SERVER_HOST }}
-          sql_http: ${{ secrets.SQL_HTTP }}
