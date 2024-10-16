@@ -9,6 +9,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env: 
+      databricks_api_key: ${{ secrets.DATABRICKS_API_KEY }}
+      sql_server_host: ${{ secrets.SQL_SERVER_HOST }}
+      sql_http: ${{ secrets.SQL_HTTP }}
     steps:
       - uses: actions/checkout@v3
       - name: install packages
@@ -24,10 +28,6 @@ jobs:
       - name: query
         run: make query
       - name: test
-        env: 
-          databricks_api_key: ${{ secrets.DATABRICKS_API_KEY }}
-          sql_server_host: ${{ secrets.SQL_SERVER_HOST }}
-          sql_http: ${{ secrets.SQL_HTTP }}
         run: make test
       - name: format
         run: make format
