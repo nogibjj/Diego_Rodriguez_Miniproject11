@@ -2,4 +2,9 @@ __pycache__/
 .idea/
 .pytest_cache/
 .ruff_cache/
+
 .coverage
+mylib/__pycache__/
+
+.DS_Store
+.env

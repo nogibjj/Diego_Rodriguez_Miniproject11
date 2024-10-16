@@ -9,9 +9,6 @@ format:
 	black *.py 
 
 lint:
-	#disable comment to test speed
-	#pylint --disable=R,C --ignore-patterns=test_.*?py *.py mylib/*.py
-	#ruff linting is 10-100X faster than pylint
 	ruff check *.py mylib/*.py
 
 container-lint:
@@ -26,7 +23,7 @@ all: install lint test format deploy
 
 generate_and_push:
 	# Create the markdown file 
-	python test_main.py  # Replace with the actual command to generate the markdown
+	python test_main.py 
 
 	# Add, commit, and push the generated files to GitHub
 	@if [ -n "$$(git status --porcelain)" ]; then \
@@ -40,10 +37,13 @@ generate_and_push:
 	fi
 
 extract:
-	python main.py extract
+	etl_query extract
 
 transform_load: 
-	python main.py transform_load
+	etl_query transform_load
 
 query:
-	python main.py general_query "SELECT * FROM ServeTimesDB WHERE server='Roger Federer';"
+	etl_query general_query "SELECT t1.country, t1.fertility_rate, t1.viral, AVG(t1.debt) as avg_debt, COUNT(*) as total_countries FROM default.der41_wdi1 t1 JOIN default.der41_wdi2 t2 ON t1.id = t2.id GROUP BY t1.country, t1.fertility_rate, t1.viral ORDER BY total_countries DESC LIMIT 10"
+
+setup_package: 
+	python setup.py develop --user

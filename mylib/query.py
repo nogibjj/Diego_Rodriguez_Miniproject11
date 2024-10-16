@@ -1,43 +1,36 @@
-"""
-Query the database
-"""
+"""Query the database from a db connection to Azure Databricks"""
 
-import sqlite3
-
-
-def querycreate():
-    conn = sqlite3.connect("wdi.db")
-    cursor = conn.cursor()
-    # create execution
-    cursor.execute(
-        "INSERT INTO wdi (country,fertility_rate,viral,battle,cpia_1) VALUES(1,1,1,1,1)"
-    )
-    conn.close()
-    return "Create Success"
+import os
+from databricks import sql
+from dotenv import load_dotenv
 
 
-def queryRead():
-    conn = sqlite3.connect("wdi.db")
-    cursor = conn.cursor()
-    # read execution
-    cursor.execute("SELECT * FROM wdi LIMIT 10")
-    conn.close()
-    return "Read Success"
+# Define a global variable for the log file
+LOG_FILE = "query_log.md"
 
 
-def queryUpdate():
-    conn = sqlite3.connect("wdi.db")
-    cursor = conn.cursor()
-    # update execution
-    cursor.execute("UPDATE wdi SET viral = 1 WHERE id = 1 ")
-    conn.close()
-    return "Update Success"
+def log_query(query, result="none"):
+    """adds to a query markdown file"""
+    with open(LOG_FILE, "a") as file:
+        # add this to write properly because before it didn't convert properly
+        file.write(f"```sql\n{query}\n```\n\n")
+        file.write(f"```response from databricks\n{result}\n```\n\n")
 
 
-def queryDelete():
-    conn = sqlite3.connect("wdi.db")
-    cursor = conn.cursor()
-    # delete execution
-    cursor.execute("DELETE FROM wdi WHERE id = 3")
-    conn.close()
-    return "Delete Success"
+def general_query(query):
+    """runs a query a user inputs"""
+
+    load_dotenv()
+    server_h = os.getenv("sql_server_host")
+    access_token = os.getenv("databricks_api_key")
+    http_path = os.getenv("sql_http")
+    with sql.connect(
+        server_hostname=server_h,
+        http_path=http_path,
+        access_token=access_token,
+    ) as connection:
+        c = connection.cursor()
+        c.execute(query)
+        result = c.fetchall()
+    c.close()
+    log_query(f"{query}", f"{result}")
