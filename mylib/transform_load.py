@@ -18,9 +18,9 @@ def load(dataset="data/wdi1.csv", dataset2="data/wdi2.csv"):
     df2 = df2.replace({np.nan: 0})
     # Open and read the CSV file
     load_dotenv()
-    server_h = os.getenv("sql_server_host")
-    access_token = os.getenv("databricks_api_key")
-    http_path = os.getenv("sql_http")
+    server_h = os.getenv("SQL_SERVER_HOST")
+    access_token = os.getenv("DATABRICKS_API_KEY")
+    http_path = os.getenv("SQL_HTTP")
     print(server_h, access_token, http_path)
     with sql.connect(
         server_hostname=server_h, http_path=http_path, access_token=access_token
