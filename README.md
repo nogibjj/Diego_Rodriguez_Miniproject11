@@ -31,7 +31,7 @@ The purpose of this project is to build an ETL-Query pipeline. I use World Bank,
 video
 
 ### Database Connection
-1. Under `mylib/` directory `exract.py` extract raw data from an online source. 
+1. Under `mylib/` directory `extract.py` extract raw data from an online source. 
 2. Under `mylib/` directory `transform_and_load.py` clean and transform raw data from `csv` to `db` and builds connections to databricks. 
 
 ### CRUD Operations 'Pending PUT A PICTURE OF THE QUERY EXECUTED'
