@@ -1,3 +1,0 @@
-databricks-sql-connector
-pandas
-python-dotenv

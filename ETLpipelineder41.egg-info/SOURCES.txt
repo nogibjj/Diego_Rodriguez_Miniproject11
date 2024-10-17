@@ -1,8 +1,0 @@
-README.md
-setup.py
-ETLpipelineder41.egg-info/PKG-INFO
-ETLpipelineder41.egg-info/SOURCES.txt
-ETLpipelineder41.egg-info/dependency_links.txt
-ETLpipelineder41.egg-info/entry_points.txt
-ETLpipelineder41.egg-info/requires.txt
-ETLpipelineder41.egg-info/top_level.txt
