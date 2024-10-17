@@ -10,11 +10,14 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env: 
-      databricks_api_key: ${{ secrets.DATABRICKS_API_KEY }}
-      sql_server_host: ${{ secrets.SQL_SERVER_HOST }}
-      sql_http: ${{ secrets.SQL_HTTP }}
+      DATABRICKS_API_KEY: ${{ secrets.DATABRICKS_API_KEY }}
+      SQL_SERVER_HOST: ${{ secrets.SQL_SERVER_HOST }}
+      SQL_HTTP: ${{ secrets.SQL_HTTP }}
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+        with:
+          python-version: 3.9
       - name: install packages
         run: make install
       - name: install local package
