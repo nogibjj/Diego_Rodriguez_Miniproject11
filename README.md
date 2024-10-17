@@ -9,7 +9,6 @@ Diego_Rodriguez_Miniproject6/
 │   └── Dockerfile
 ├── .github/
 │   └── workflows/hello.yml
-├── .gitignore
 ├── data/
 │   ├── wdi1.csv
 │   └── wdi2.csv
