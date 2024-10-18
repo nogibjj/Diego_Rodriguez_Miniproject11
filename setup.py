@@ -5,9 +5,10 @@ setup(
     name="ETLpipelineder41",
     version="0.1.0",
     description="ETLpipline",
-    author="Jeremy Tan",
+    author="Diego Rodriguez",
     author_email="diego.rodriguez@duke.edu",
     packages=find_packages(),
+    # includes = []
     install_requires=[
         "databricks-sql-connector",
         "pandas",

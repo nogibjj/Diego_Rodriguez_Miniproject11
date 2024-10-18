@@ -10,24 +10,20 @@ from mylib.query import (
 
 
 def handle_arguments(args):
-    """add action based on inital calls"""
+    """Add action based on initial calls"""
     parser = argparse.ArgumentParser(description="ETL-Query script")
     parser.add_argument(
         "action",
-        choices=[
-            "extract",
-            "transform_load",
-            "general_query",
-        ],
-        # shows how to run output
-        help="""Action to perform (extract, transform_load, general_query). """,
+        choices=["extract", "transform_load", "general_query"],
+        help="Action to perform (extract, transform_load, general_query).",
     )
-    args = parser.parse_args(args[:1])
-    if args.action == "general_query":
-        parser.add_argument("query")
 
-    # parse again with ever
-    return parser.parse_args(sys.argv[1:])
+    # Add query argument if the action is general_query
+    if len(args) > 0 and args[0] == "general_query":
+        parser.add_argument("query", help="The SQL query to execute.")
+
+    # Parse arguments
+    return parser.parse_args(args)
 
 
 def main():
