@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix: #strategy
         python-version: [3.8]
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     env: 
       DATABRICKS_API_KEY: ${{ secrets.DATABRICKS_API_KEY }}
