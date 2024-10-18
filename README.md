@@ -23,15 +23,16 @@ Diego_Rodriguez_Miniproject6/
 ├── README.md
 ├── requirements.txt
 ├── test_main.py
+├── user_guide.md
 └── wdi.db
 ```
 
 ### Purpose of project
-The purpose of this project is to build an ETL-Query pipeline. I use World Bank, World Development Indicators dataset to extract it into a local csv file, transform the csv file by cleaning it, loading it into a .db ready for Complex SQL query using Databricks.
+The purpose of this project is to build an ETL-Query pipeline. I use World Bank, World Development Indicators dataset to extract it into a local csv file, transform the csv file by cleaning it, loading it into a .db ready for Complex SQL query using Databricks.This is possible by using `Github Secrets`, connected through `setup.py`, and running CI/CD operations with the `env:` option on the `yml` file. For a detailed step by step procedure to execute from the command line please check [here](https://github.com/nogibjj/Diego_Rodriguez_Miniproject6/blob/main/user_guide.md).
 
 ### Database Connection
 1. Under `mylib/` directory `extract.py` extract raw data from an online source. 
-2. Under `mylib/` directory `transform_and_load.py` clean and transform raw data from `csv` to `db` and builds connections to databricks. This is possible by using `Github Secrets`, connected through `setup.py`, and running CI/CD operations with the `env:` option on the `yml` file. 
+2. Under `mylib/` directory `transform_and_load.py` clean and transform raw data from `csv` to `db` and builds connections to databricks. 
 
 ### Complex Query
 Under `mylib/` directory `query.py` performs the complex Query operation. In this case: 
