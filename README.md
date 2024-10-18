@@ -1,9 +1,9 @@
-## Diego_Rodriguez_Miniproject6
+## Diego_Rodriguez_Miniproject7
 [![CI/CD run](https://github.com/nogibjj/Diego_Rodriguez_Miniproject6/actions/workflows/hello.yml/badge.svg)](https://github.com/nogibjj/Diego_Rodriguez_Miniproject6/actions/workflows/hello.yml)
 
 ### File Structure
 ```
-Diego_Rodriguez_Miniproject6/
+Diego_Rodriguez_Miniproject7/
 ├── .devcontainer/
 │   ├── devcontainer.json
 │   └── Dockerfile
