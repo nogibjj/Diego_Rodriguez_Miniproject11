@@ -2,78 +2,34 @@
 Transforms and Loads data into Azure Databricks
 """
 
-import os
-from databricks import sql
-import pandas as pd
-import numpy as np
-from dotenv import load_dotenv
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import monotonically_increasing_id
 
 
-# load the csv file and insert into databricks
-def load(dataset="data/wdi1.csv", dataset2="data/wdi2.csv"):
-    """Transforms and Loads data into the local databricks database"""
-    df1 = pd.read_csv(dataset, delimiter=",", skiprows=1, usecols=range(7))
-    df2 = pd.read_csv(dataset2, delimiter=",", skiprows=1, usecols=range(7))
-    df1 = df1.replace({np.nan: 0})
-    df2 = df2.replace({np.nan: 0})
-    # Open and read the CSV file
-    load_dotenv()
-    server_h = os.getenv("SQL_SERVER_HOST")
-    access_token = os.getenv("DATABRICKS_API_KEY")
-    http_path = os.getenv("SQL_HTTP")
-    print(server_h, access_token, http_path)
-    with sql.connect(
-        server_hostname=server_h, http_path=http_path, access_token=access_token
-    ) as connection:
-        c = connection.cursor()
-        # INSERT TAKES TOO LONG
-        # c.execute("DROP TABLE IF EXISTS der41_wdi2")
-        c.execute("SHOW TABLES FROM default LIKE 'der41_wdi1'")
-        result = c.fetchall()
-        print(result)
-        # takes too long so not dropping anymore
-        # c.execute("DROP TABLE IF EXISTS der41_wdi1")
-        if not result:
-            c.execute(
-                """
-                CREATE TABLE IF NOT EXISTS der41_wdi1 (
-                    id int,
-                    country string,
-                    fertility_rate int,
-                    viral int,
-                    battle int,
-                    cpia_1 int,
-                    cpia_2 int,
-                    debt int
-                    )
-                """
-            )
-            # Insert the filtered data into the table
-            for _, row in df1.iterrows():
-                convert = (_,) + tuple(row)
-                c.execute(f"INSERT INTO der41_wdi1 VALUES {convert}")
-        c.execute("SHOW TABLES FROM default LIKE 'der41_wdi2'")
-        result = c.fetchall()
-        print(result)
-        # c.execute("DROP TABLE IF EXISTS EventTimesDB")
-        if not result:
-            c.execute(
-                """
-                    CREATE TABLE IF NOT EXISTS der41_wdi2 (
-                        id int,
-                        country string,
-                        fertility_rate int,
-                        viral int,
-                        battle int,
-                        cpia_1 int,
-                        cpia_2 int,
-                        debt int
-                    )
-                """
-            )
-            # Insert the filtered data into the table
-            for _, row in df2.iterrows():
-                convert = (_,) + tuple(row)
-                c.execute(f"INSERT INTO der41_wdi2 VALUES {convert}")
-        c.close()
-    return "success"
+def load(
+    dataset="dbfs:/FileStore/mini_project11/wdi1.csv",
+    dataset2="dbfs:/FileStore/mini_project11/wdi2.csv",
+):
+    spark = SparkSession.builder.appName("Read CSV").getOrCreate()
+    # load csv and transform it by inferring schema
+    wdi1_df = spark.read.csv(dataset, header=True, inferSchema=True)
+    wdi2_df = spark.read.csv(dataset2, header=True, inferSchema=True)
+
+    # add unique IDs to the DataFrames
+    wdi1_df = wdi1_df.withColumn("id", monotonically_increasing_id())
+    wdi2_df = wdi2_df.withColumn("id", monotonically_increasing_id())
+
+    # transform into a delta lakes table and store it
+    wdi2_df.write.format("delta").mode("overwrite").saveAsTable("wdi2_delta")
+    wdi1_df.write.format("delta").mode("overwrite").saveAsTable("wdi1_delta")
+
+    num_rows = wdi2_df.count()
+    print(num_rows)
+    num_rows = wdi1_df.count()
+    print(num_rows)
+
+    return "finished transform and load"
+
+
+if __name__ == "__main__":
+    load()

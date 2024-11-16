@@ -1,60 +1,35 @@
 """
-Test goes here
+Test databricks fucntionaility
 """
 
-import subprocess
+import requests
+from dotenv import load_dotenv
+import os
+
+# Load environment variables
+load_dotenv()
+server_h = os.getenv("SERVER_HOSTNAME")
+access_token = os.getenv("ACCESS_TOKEN")
+FILESTORE_PATH = "dbfs:/FileStore/mini_project11"
+url = f"https://{server_h}/api/2.0"
 
 
-def test_extract():
-    """tests extract()"""
-    result = subprocess.run(
-        ["python", "main.py", "extract"],
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    assert result.returncode == 0
-    assert "Extracting data..." in result.stdout
+# Function to check if a file path exists and auth settings still work
+def check_filestore_path(path, headers):
+    try:
+        response = requests.get(url + f"/dbfs/get-status?path={path}", headers=headers)
+        response.raise_for_status()
+        return response.json()["path"] is not None
+    except Exception as e:
+        print(f"Error checking file path: {e}")
+        return False
 
 
-def test_transform_load():
-    """tests transfrom_load"""
-    result = subprocess.run(
-        ["python", "main.py", "transform_load"],
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    assert result.returncode == 0
-    assert "Transforming data..." in result.stdout
-
-
-def test_general_query():
-    """tests general_query"""
-    result = subprocess.run(
-        [
-            "python",
-            "main.py",
-            "general_query",
-            """
-            SELECT t1.country, t1.fertility_rate, t1.viral,
-                AVG(t1.debt) as avg_debt,
-                COUNT(*) as total_countries
-            FROM default.der41_wdi1 t1
-            JOIN default.der41_wdi2 t2 ON t1.id = t2.id
-            GROUP BY t1.country, t1.fertility_rate, t1.viral
-            ORDER BY total_countries DESC
-            LIMIT 10
-            """,
-        ],
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    assert result.returncode == 0
+# Test if the specified FILESTORE_PATH exists
+def test_databricks():
+    headers = {"Authorization": f"Bearer {access_token}"}
+    assert check_filestore_path(FILESTORE_PATH, headers) is True
 
 
 if __name__ == "__main__":
-    test_extract()
-    test_transform_load()
-    test_general_query()
+    test_databricks()

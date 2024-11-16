@@ -17,25 +17,18 @@ jobs:
       DATABRICKS_API_KEY: ${{ secrets.DATABRICKS_API_KEY }}
       SQL_SERVER_HOST: ${{ secrets.SQL_SERVER_HOST }}
       SQL_HTTP: ${{ secrets.SQL_HTTP }}
+      JOB_ID: ${{ secrets.JOB_ID }}
     steps:
       - uses: actions/checkout@v3
       - name: install packages
         run: make install
-      - name: install local package
-        run: make setup_package
       - name: lint
         run: make lint
-      - name: extract 
-        run: make extract 
-      - name: transform_load
-        run: make transform_load 
-      - name: query
-        run: make query
       - name: test
         run: make test
       - name: format
         run: make format
-      - name: generate_and_push
-        run: make generate_and_push
+      - name: run databricks job 
+        run: make job
       - name: deploy
         run: make deploy
