@@ -16,8 +16,9 @@ display(dbutils.fs.ls('dbfs:/'))
 # COMMAND ----------
 
 load_dotenv()
-server_h = os.getenv("SERVER_HOSTNAME")
-access_token = os.getenv("ACCESS_TOKEN")
+server_h = os.getenv("SQL_SERVER_HOST")
+access_token = os.getenv("DATABRICKS_API_KEY")
+print(server_h)
 
 # COMMAND ----------
 
@@ -82,7 +83,7 @@ create(path="dbfs:/FileStore/nlp/test_times.csv", overwrite= True, headers=heade
 
 # Usage
 serve_times_url = "https://media.githubusercontent.com/media/nickeubank/MIDS_Data/master/World_Development_Indicators/wdi_small_tidy_2015.csv"
-serve_times_dbfs_path = "dbfs:/FileStore/nlp/wdi1.csv"
+serve_times_dbfs_path = "dbfs:/FileStore/nlp/wdi2.csv"
 overwrite = True  # Set to False if you don't want to overwrite existing file
 
 put_file_from_url(serve_times_url, serve_times_dbfs_path, overwrite, headers=headers)
@@ -104,18 +105,50 @@ print(os.path.exists('dbfs:/FileStore/nlp'))
 spark = SparkSession.builder.appName("Read CSV").getOrCreate()
 
 # Define the file paths
-test_times_path = "dbfs:/FileStore/nlp/wdi1.csv"
+test_times_path = "dbfs:/FileStore/nlp/wdi2.csv"
 
 # Read the CSV files into DataFrames
 test_times_df = spark.read.csv(test_times_path, header=True, inferSchema=True)
 
-# Show the DataFrames
+# Show the DataFrame and count the number of rows
 test_times_df.show()
 num_rows = test_times_df.count()
 print(num_rows)
-# save as delta
-# transform_load
-test_times_df.write.format("delta").mode("overwrite").saveAsTable("wdi1_delta")
+
+# Define the table name
+table_name = "wdi2_delta"
+
+# Columns to keep and process
+df_subset = [
+        "Country Name",
+        "Adolescent fertility rate (births per 1,000 women ages 15-19)",
+        "Antiretroviral therapy coverage for PMTCT (% of pregnant women living with HIV)",
+        "Battle-related deaths (number of people)",
+        "CPIA building human resources rating (1=low to 6=high)",
+        "CPIA business regulatory environment rating (1=low to 6=high)",
+        "CPIA debt policy rating (1=low to 6=high)",
+    ]
+# Select only necessary columns
+test_times_df = test_times_df.select(*df_subset)
+test_times_df = test_times_df.withColumnRenamed("Country Name", "country") \
+       .withColumnRenamed("Adolescent fertility rate (births per 1,000 women ages 15-19)", "fertility_rate") \
+       .withColumnRenamed("Antiretroviral therapy coverage for PMTCT (% of pregnant women living with HIV)", "viral") \
+       .withColumnRenamed("Battle-related deaths (number of people)", "battle") \
+       .withColumnRenamed("CPIA building human resources rating (1=low to 6=high)", "cpia_1") \
+       .withColumnRenamed("CPIA business regulatory environment rating (1=low to 6=high)", "cpia_2") \
+       .withColumnRenamed("CPIA debt policy rating (1=low to 6=high)", "debt")
+       
+# Save the DataFrame as a Delta table with schema alignment
+# Check if the table exists
+if spark._jsparkSession.catalog().tableExists(table_name):
+    # Use schema evolution or enforcement when overwriting
+    test_times_df.write.format("delta") \
+        .mode("overwrite") \
+        .option("overwriteSchema", "true") \
+        .saveAsTable(table_name)
+else:
+    # Create the Delta table if it doesn't exist
+    test_times_df.write.format("delta").mode("overwrite").saveAsTable(table_name)
 
 # COMMAND ----------
 
@@ -180,26 +213,58 @@ display(dbutils.fs.ls('dbfs:/FileStore/mini_project11'))
 
 from pyspark.sql.functions import monotonically_increasing_id
 
-def load(dataset="dbfs:/FileStore/mini_project11/wdi1.csv", 
-         dataset2="dbfs:/FileStore/mini_project11/wdi2.csv"):
+def load_data(spark, data, name):
+    """Load data with original headers, handle NaN values, and rename columns for easier handling."""
+    df = spark.read.csv(data, header=True, inferSchema=True)
+
+    # Columns to keep and process
+    df_subset = [
+        "Country Name",
+        "Adolescent fertility rate (births per 1,000 women ages 15-19)",
+        "Antiretroviral therapy coverage for PMTCT (% of pregnant women living with HIV)",
+        "Battle-related deaths (number of people)",
+        "CPIA building human resources rating (1=low to 6=high)",
+        "CPIA business regulatory environment rating (1=low to 6=high)",
+        "CPIA debt policy rating (1=low to 6=high)",
+    ]
+    # Select only necessary columns
+    df = df.select(*df_subset)
+
+    # Rename columns to shorter names for easier handling
+    df = (
+        df.withColumnRenamed("Country Name", "country") \
+       .withColumnRenamed("Adolescent fertility rate (births per 1,000 women ages 15-19)", "fertility_rate") \
+       .withColumnRenamed("Antiretroviral therapy coverage for PMTCT (% of pregnant women living with HIV)", "viral") \
+       .withColumnRenamed("Battle-related deaths (number of people)", "battle") \
+       .withColumnRenamed("CPIA building human resources rating (1=low to 6=high)", "cpia_1") \
+       .withColumnRenamed("CPIA business regulatory environment rating (1=low to 6=high)", "cpia_2") \
+       .withColumnRenamed("CPIA debt policy rating (1=low to 6=high)", "debt")
+    )
+    return df
+
+def load(
+    dataset="dbfs:/FileStore/nlp/wdi1.csv",
+    dataset2="dbfs:/FileStore/nlp/wdi2.csv",
+):
     spark = SparkSession.builder.appName("Read CSV").getOrCreate()
-    # load csv and transform it by inferring schema 
-    wdi1_df = spark.read.csv(dataset, header=True, inferSchema=True)
-    wdi2_df = spark.read.csv(dataset2, header=True, inferSchema=True)
+
+    # Load and process datasets
+    wdi1_df = load_data(spark, dataset, "wdi1")
+    wdi2_df = load_data(spark, dataset2, "wdi2")
 
     # add unique IDs to the DataFrames
     wdi1_df = wdi1_df.withColumn("id", monotonically_increasing_id())
     wdi2_df = wdi2_df.withColumn("id", monotonically_increasing_id())
 
-    # transform into a delta lakes table and store it 
-    wdi2_df.write.format("delta").mode("overwrite").saveAsTable("wdi2_delta")
-    wdi1_df.write.format("delta").mode("overwrite").saveAsTable("wdi1_delta")
-    
+    # transform into a delta lakes table and store it
+    wdi2_df.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable("wdi2_delta")
+    wdi1_df.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable("wdi1_delta")
+
     num_rows = wdi2_df.count()
     print(num_rows)
     num_rows = wdi1_df.count()
     print(num_rows)
-    
+
     return "finished transform and load"
 
 
@@ -217,19 +282,11 @@ query_result = spark.sql("""
     SELECT 
         * 
     FROM 
-        wdi
+        wdi2_delta
     WHERE
         country = 'Chile'
 """)
 query_result.show()
-
-
-# COMMAND ----------
-
-with open("sample_query.sql", "r") as file:
-    sql_query = file.read()
-    query_result = spark.sql(sql_query)
-    query_result.show()
 
 
 # COMMAND ----------
@@ -240,7 +297,7 @@ def query_transform():
     """
     spark = SparkSession.builder.appName("Query").getOrCreate()
     query = (
-        "SELECT * FROM wdi WHERE country = 'Chile'"
+        "SELECT * FROM wdi1_delta WHERE country = 'Chile'"
     )
     query_result = spark.sql(query)
     return query_result
@@ -252,10 +309,6 @@ query = query_transform()
 
 # COMMAND ----------
 
-query['seconds_before_next_point']
-
-# COMMAND ----------
-
 !pip install pyspark_dist_explore
 
 # COMMAND ----------
@@ -264,9 +317,9 @@ import requests
 from dotenv import load_dotenv
 
 load_dotenv()
-access_token = os.getenv("ACCESS_TOKEN")
+access_token = os.getenv("DATABRICKS_API_KEY")
 job_id = os.getenv("JOB_ID")
-server_h = os.getenv("SERVER_HOSTNAME")
+server_h = os.getenv("SQL_SERVER_HOST")
 
 url = f'https://{server_h}/api/2.0/jobs/run-now'
 
